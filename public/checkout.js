@@ -1,53 +1,60 @@
-let stripe, elements, orderId;
+async function handleClick() {
+  const button = document.getElementById('checkout-button');
+  button.disabled = true;
 
-async function initialize() {
-  const configRes = await fetch('/api/config');
-  const { publishableKey } = await configRes.json();
-  stripe = Stripe(publishableKey);
+  try {
+    const res = await fetch('/api/create-checkout-session', { method: 'POST' });
+    const data = await res.json();
 
-  const intentRes = await fetch('/api/create-payment-intent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: 2000 }),
-  });
-  const { clientSecret, orderId: newOrderId } = await intentRes.json();
-  orderId = newOrderId;
+    if (!res.ok || !data.url) {
+      throw new Error(data.error || 'Failed to start checkout');
+    }
 
-  elements = stripe.elements({ clientSecret });
-  const paymentElement = elements.create('payment');
-  paymentElement.mount('#payment-element');
+    // Redirect to Stripe's hosted Checkout page.
+    window.location.href = data.url;
+  } catch (err) {
+    console.error(err);
+    alert('Something went wrong starting checkout. Check the server logs.');
+    button.disabled = false;
+  }
 }
 
-async function handleSubmit(event) {
-  event.preventDefault();
-  setLoading(true);
+function formatAmount(order) {
+  return `$${(order.amount / 100).toFixed(2)} ${order.currency.toUpperCase()}`;
+}
 
-  const { error } = await stripe.confirmPayment({
-    elements,
-    confirmParams: { return_url: window.location.href },
-    redirect: 'if_required',
-  });
+async function loadOrders() {
+  const res = await fetch('/api/orders');
+  const orders = await res.json();
 
-  if (error) {
-    showMessage(error.message);
-  } else {
-    // The customer sees this the instant Stripe confirms the charge
-    // client-side — regardless of whether the backend ever hears about it.
-    showMessage(`Payment successful! Order ${orderId} is being processed.`);
+  const table = document.getElementById('orders-table');
+  const empty = document.getElementById('orders-empty');
+  const body = document.getElementById('orders-body');
+
+  if (!orders.length) {
+    table.hidden = true;
+    empty.hidden = false;
+    return;
   }
 
-  setLoading(false);
-}
-
-function showMessage(text) {
-  document.getElementById('message').textContent = text;
-}
-
-function setLoading(isLoading) {
-  document.getElementById('submit').disabled = isLoading;
+  empty.hidden = true;
+  table.hidden = false;
+  body.innerHTML = orders
+    .map(
+      (order) => `
+        <tr>
+          <td title="${order.orderId}">${order.orderId.slice(0, 8)}…</td>
+          <td>${formatAmount(order)}</td>
+          <td class="status-${order.status}">${order.status}</td>
+          <td>${new Date(order.createdAt).toLocaleString()}</td>
+        </tr>
+      `
+    )
+    .join('');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initialize();
-  document.getElementById('payment-form').addEventListener('submit', handleSubmit);
+  document.getElementById('checkout-button').addEventListener('click', handleClick);
+  document.getElementById('refresh-orders').addEventListener('click', loadOrders);
+  loadOrders();
 });

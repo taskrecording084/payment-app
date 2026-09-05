@@ -4,21 +4,31 @@
     <meta charset="utf-8" />
     <title>Test Checkout</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 480px; margin: 60px auto; }
-      #payment-element { margin: 20px 0; }
+      body { font-family: system-ui, sans-serif; max-width: 640px; margin: 60px auto; }
       button { padding: 10px 16px; cursor: pointer; }
-      #message { margin-top: 16px; font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9em; }
+      th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; }
+      .status-pending { color: #b45309; font-weight: 600; }
+      .status-paid { color: #15803d; font-weight: 600; }
+      #orders-empty { color: #666; }
+      h2 { margin-top: 40px; display: flex; align-items: center; gap: 10px; }
+      #refresh-orders { font-size: 0.7em; padding: 4px 10px; }
     </style>
   </head>
   <body>
     <h1>Checkout</h1>
     <p>Test item — $20.00</p>
-    <form id="payment-form">
-      <div id="payment-element"></div>
-      <button id="submit" type="submit">Pay $20.00</button>
-      <div id="message"></div>
-    </form>
-    <script src="https://js.stripe.com/v3/"></script>
+    <button id="checkout-button" type="button">Pay with Stripe Checkout</button>
+
+    <h2>Previous orders <button id="refresh-orders" type="button">Refresh</button></h2>
+    <p id="orders-empty" hidden>No orders yet.</p>
+    <table id="orders-table" hidden>
+      <thead>
+        <tr><th>Order</th><th>Amount</th><th>Status</th><th>Created</th></tr>
+      </thead>
+      <tbody id="orders-body"></tbody>
+    </table>
+
     <script src="checkout.js"></script>
   </body>
 </html>

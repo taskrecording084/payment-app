@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Payment successful</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 480px; margin: 60px auto; }
+      #session-id { color: #666; font-size: 0.85em; word-break: break-all; }
+      #status-box { margin-top: 24px; padding: 16px; border-radius: 8px; border: 1px solid #ddd; }
+      #status-value { font-weight: 700; font-size: 1.2em; }
+      .status-pending { color: #b45309; }
+      .status-paid { color: #15803d; }
+      #refresh-status { margin-top: 10px; padding: 6px 12px; cursor: pointer; }
+      a { display: inline-block; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <h1>Payment successful!</h1>
+    <p>Stripe confirmed the charge — that's what triggered this page.</p>
+    <p id="session-id"></p>
+
+    <div id="status-box">
+      <div>Order status in the database right now:</div>
+      <div id="status-value">checking…</div>
+      <button id="refresh-status" type="button">Refresh status</button>
+    </div>
+
+    <a href="/">&larr; Back to checkout</a>
+
+    <script>
+      const sessionId = new URLSearchParams(window.location.search).get('session_id');
+      const sessionIdEl = document.getElementById('session-id');
+      const statusEl = document.getElementById('status-value');
+
+      if (sessionId) {
+        sessionIdEl.textContent = `Checkout session: ${sessionId}`;
+      }
+
+      async function loadStatus() {
+        if (!sessionId) {
+          statusEl.textContent = 'no session_id in URL';
+          return;
+        }
+
+        statusEl.textContent = 'checking…';
+        statusEl.className = '';
+
+        try {
+          const res = await fetch(`/api/orders/by-session/${sessionId}`);
+          if (!res.ok) {
+            statusEl.textContent = 'order not found';
+            return;
+          }
+          const order = await res.json();
+          statusEl.textContent = order.status;
+          statusEl.className = `status-${order.status}`;
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = 'error checking status';
+        }
+      }
+
+      document.getElementById('refresh-status').addEventListener('click', loadStatus);
+      loadStatus();
+    </script>
+  </body>
+</html>
