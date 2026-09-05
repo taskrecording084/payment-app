@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Test Checkout</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 480px; margin: 60px auto; }
+      #payment-element { margin: 20px 0; }
+      button { padding: 10px 16px; cursor: pointer; }
+      #message { margin-top: 16px; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Checkout</h1>
+    <p>Test item — $20.00</p>
+    <form id="payment-form">
+      <div id="payment-element"></div>
+      <button id="submit" type="submit">Pay $20.00</button>
+      <div id="message"></div>
+    </form>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="checkout.js"></script>
+  </body>
+</html>
